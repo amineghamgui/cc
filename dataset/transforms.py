@@ -93,7 +93,9 @@ class Augmentation(object):
         # Initialize Random Variables
         oh = video_clip.size(2) 
         ow = video_clip.size(3)
-        
+
+
+        print("target in transform###########################"",target)
         # random crop
         video_clip, dx, dy, sx, sy = self.random_crop(video_clip, ow, oh)
 
