@@ -64,7 +64,7 @@ class AVA_Dataset(Dataset):
     #     return list_frames
 
 
-    
+    @staticmethod
     def extract_frames(video_path):
         video = EncodedVideo.from_path(video_path,)
         # Load the desired clip
