@@ -109,7 +109,7 @@ class Augmentation(object):
 
         # distort
         video_clip = self.random_distort_image(video_clip)
-
+        print("target in transform",target)
         # process target
         if target is not None:
             target = self.apply_bbox(target, ow, oh, dx, dy, sx, sy)
