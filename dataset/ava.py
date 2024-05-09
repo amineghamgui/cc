@@ -64,17 +64,40 @@ class AVA_Dataset(Dataset):
     #     return list_frames
 
 
+    # @staticmethod
+    # def extract_frames(video_path):
+    #     video = EncodedVideo.from_path(video_path,)
+    #     # Load the desired clip
+    #     video_data = video.get_clip(start_sec=0, end_sec=1.0)
+    #     uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
+    #     # Créer un tenseur vidéo simulé avec les dimensions (C, T, H, W)
+    #     video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
+    #     # Appliquer la transformation
+    #     subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
+    #     subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
+    #     return subsampled_video_tensor
+
     @staticmethod
     def extract_frames(video_path):
-        video = EncodedVideo.from_path(video_path,)
-        # Load the desired clip
+        # Charger la vidéo
+        video = EncodedVideo.from_path(video_path)
+        # Charger le clip désiré
         video_data = video.get_clip(start_sec=0, end_sec=1.0)
         uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
         # Créer un tenseur vidéo simulé avec les dimensions (C, T, H, W)
         video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
+        
+        # Transférer le tenseur vidéo sur le GPU si disponible
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        video_tensor = video_tensor.to(device)
+        
         # Appliquer la transformation
         subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
         subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
+        
+        # Transférer le tenseur résultant sur le CPU si nécessaire
+        subsampled_video_tensor = subsampled_video_tensor.cpu() if device == torch.device("cuda") else subsampled_video_tensor
+        
         return subsampled_video_tensor
     
 
