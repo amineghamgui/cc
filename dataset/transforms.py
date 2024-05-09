@@ -26,28 +26,22 @@ class Augmentation(object):
     def resize_fn(self, video_tensor):
         nouvelle_taille = (self.img_size, self.img_size)
         resize = TF.Resize(nouvelle_taille)
-        resize_video = [resize(video_tensor[i]) for i in range(video_tensor.size(0))]
-        resize_video = torch.stack(resize_video, dim=0)
+        resize_video = resize(video_tensor)
         return resize_video
         
     def horizontal_flip(self, video_tensor):
         random_horizontal_flip = TF.RandomHorizontalFlip(p=1)
-        random_horizontal_flip_video = [random_horizontal_flip(video_tensor[i]) for i in range(video_tensor.size(0))]
-        random_horizontal_flip_video=torch.stack(random_horizontal_flip_video, dim=0)
+        random_horizontal_flip_video = random_horizontal_flip(video_tensor)
         return random_horizontal_flip_video   
     
     def normalisation(self, video_tensor):
-        normalized_clip = [F.normalize(video_tensor[i], self.pixel_mean, self.pixel_std) for i in range(video_tensor.size(0))]
-        normalized_clip=torch.stack(normalized_clip, dim=0)
+        normalized_clip = F.normalize(video_tensor, self.pixel_mean, self.pixel_std)
         return normalized_clip
     
     def random_distort_image(self, video_tensor):
-#         dhue = random.uniform(-self.hue, self.hue)
         dsat = self.rand_scale(self.saturation)
-        
         color_jitter = TF.ColorJitter(saturation=dsat, hue=(-self.hue, self.hue))
-        color_jitter_clip = [color_jitter(video_tensor[i]) for i in range(video_tensor.size(0))]
-        color_jitter_clip=torch.stack(color_jitter_clip, dim=0)
+        color_jitter_clip = color_jitter(video_tensor)
         return color_jitter_clip
 
     def random_crop(self, video_tensor, width, height):
@@ -62,17 +56,10 @@ class Augmentation(object):
         swidth = width - pleft - pright
         sheight = height - ptop - pbot
 
-        sx = float(swidth) / width
-        sy = float(sheight) / height
+        # Random crop
+        cropped_clip = F.crop(video_tensor, ptop, pleft, sheight, swidth)
 
-        dx = (float(pleft) / width) / sx
-        dy = (float(ptop) / height) / sy
-        
-        # random crop
-        cropped_clip = [F.crop(video_tensor[i], ptop, pleft, sheight, swidth) for i in range(video_tensor.size(0))]
-
-        cropped_clip=torch.stack(cropped_clip, dim=0)
-        return cropped_clip, dx, dy, sx, sy
+        return cropped_clip, ptop, pleft, sheight, swidth
 
     def apply_bbox(self, target, ow, oh, dx, dy, sx, sy):
         sx, sy = 1./sx, 1./sy
@@ -145,17 +132,15 @@ class BaseTransform(object):
         self.pixel_std = pixel_std
         
     def normalisation(self, video_tensor):
-        normalized_clip = [F.normalize(video_tensor[i], self.pixel_mean, self.pixel_std) for i in range(video_tensor.size(0))]
-        normalized_clip=torch.stack(normalized_clip, dim=0)
+        normalized_clip = F.normalize(video_tensor, self.pixel_mean, self.pixel_std)
         return normalized_clip
     
     def resize_fn(self, video_tensor):
         nouvelle_taille = (self.img_size, self.img_size)
         resize = TF.Resize(nouvelle_taille)
-        resize_video = [resize(video_tensor[i]) for i in range(video_tensor.size(0))]
-        resize_video = torch.stack(resize_video, dim=0)
+        resize_video = resize(video_tensor)
         return resize_video
-    
+        
     def __call__(self, video_clip, target=None, normalize=True):
         
         oh = video_clip.size(2) 
