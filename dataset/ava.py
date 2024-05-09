@@ -74,7 +74,7 @@ class AVA_Dataset(Dataset):
         video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
         # Appliquer la transformation
         subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
-    #     subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
+        subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
         return subsampled_video_tensor
     
 
