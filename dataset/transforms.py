@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import torch
+import torchvision.transforms as TF
 import torchvision.transforms.functional as F
 from PIL import Image
 from torchvision.transforms.functional import to_pil_image
@@ -16,69 +17,62 @@ class Augmentation(object):
         self.saturation = saturation
         self.exposure = exposure
 
-
     def rand_scale(self, s):
         scale = random.uniform(1, s)
-
         if random.randint(0, 1): 
             return scale
-
         return 1./scale
-
-
-    def random_distort_image(self, video_clip):
-        dhue = random.uniform(-self.hue, self.hue)
-        dsat = self.rand_scale(self.saturation)
-        dexp = self.rand_scale(self.exposure)
+    
+    def resize_fn(self, video_tensor):
+        nouvelle_taille = (self.img_size, self.img_size)
+        resize = TF.Resize(nouvelle_taille)
+        resize_video = [resize(video_tensor[i]) for i in range(video_tensor.size(0))]
+        resize_video = torch.stack(resize_video, dim=0)
+        return resize_video
         
-        video_clip_ = []
-        for image in video_clip:
-            image = image.convert('HSV')
-            cs = list(image.split())
-            cs[1] = cs[1].point(lambda i: i * dsat)
-            cs[2] = cs[2].point(lambda i: i * dexp)
-            
-            def change_hue(x):
-                x += dhue * 255
-                if x > 255:
-                    x -= 255
-                if x < 0:
-                    x += 255
-                return x
+    def horizontal_flip(self, video_tensor):
+        random_horizontal_flip = TF.RandomHorizontalFlip(p=1)
+        random_horizontal_flip_video = [random_horizontal_flip(video_tensor[i]) for i in range(video_tensor.size(0))]
+        random_horizontal_flip_video=torch.stack(random_horizontal_flip_video, dim=0)
+        return random_horizontal_flip_video   
+    
+    def normalisation(self, video_tensor):
+        normalized_clip = [F.normalize(video_tensor[i], self.pixel_mean, self.pixel_std) for i in range(video_tensor.size(0))]
+        normalized_clip=torch.stack(normalized_clip, dim=0)
+        return normalized_clip
+    
+    def random_distort_image(self, video_tensor):
+#         dhue = random.uniform(-self.hue, self.hue)
+        dsat = self.rand_scale(self.saturation)
+        
+        color_jitter = TF.ColorJitter(saturation=dsat, hue=(-self.hue, self.hue))
+        color_jitter_clip = [color_jitter(video_tensor[i]) for i in range(video_tensor.size(0))]
+        color_jitter_clip=torch.stack(color_jitter_clip, dim=0)
+        return color_jitter_clip
 
-            cs[0] = cs[0].point(change_hue)
-            image = Image.merge(image.mode, tuple(cs))
+    def random_crop(self, video_tensor, width, height):
+        dw = int(width * self.jitter)
+        dh = int(height * self.jitter)
 
-            image = image.convert('RGB')
-
-            video_clip_.append(image)
-
-        return video_clip_
-
-
-    def random_crop(self, video_clip, width, height):
-        dw =int(width * self.jitter)
-        dh =int(height * self.jitter)
-
-        pleft  = random.randint(-dw, dw)
+        pleft = random.randint(-dw, dw)
         pright = random.randint(-dw, dw)
-        ptop   = random.randint(-dh, dh)
-        pbot   = random.randint(-dh, dh)
+        ptop = random.randint(-dh, dh)
+        pbot = random.randint(-dh, dh)
 
-        swidth =  width - pleft - pright
+        swidth = width - pleft - pright
         sheight = height - ptop - pbot
 
-        sx = float(swidth)  / width
+        sx = float(swidth) / width
         sy = float(sheight) / height
+
+        dx = (float(pleft) / width) / sx
+        dy = (float(ptop) / height) / sy
         
-        dx = (float(pleft) / width)/sx
-        dy = (float(ptop) / height)/sy
-
         # random crop
-        cropped_clip = [img.crop((pleft, ptop, pleft + swidth - 1, ptop + sheight - 1)) for img in video_clip]
+        cropped_clip = [F.crop(video_tensor[i], ptop, pleft, sheight, swidth) for i in range(video_tensor.size(0))]
 
+        cropped_clip=torch.stack(cropped_clip, dim=0)
         return cropped_clip, dx, dy, sx, sy
-
 
     def apply_bbox(self, target, ow, oh, dx, dy, sx, sy):
         sx, sy = 1./sx, 1./sy
@@ -103,49 +97,28 @@ class Augmentation(object):
         refine_target = np.array(refine_target).reshape(-1, target.shape[-1])
 
         return refine_target
-        
-
-    def to_tensor(self, video_clip):
-        return [F.normalize(F.to_tensor(image), self.pixel_mean, self.pixel_std) for image in video_clip]
     
     
-    @staticmethod
-    def tensor_video_to_pil_list(video_tensor):
-        # Créer une liste pour stocker les cadres PIL
-        pil_frames = []
-
-        # Inverser les dimensions du tenseur vidéo si nécessaire
-        video_tensor = video_tensor.permute(1, 0, 2, 3)
-
-        # Itérer sur la dimension temporelle du tensor de vidéo
-        for frame_tensor in video_tensor:
-            # Convertir le tensor de cadre en objet PIL Image
-            
-            pil_frame = to_pil_image(255-frame_tensor)
-            
-            # Convertir l'image en mode RGB
-            pil_frame = pil_frame.convert('RGB')
-            
-            # Ajouter le cadre PIL à la liste
-            pil_frames.append(pil_frame)
-
-        return pil_frames
+    
     def __call__(self, video_clip, target):
-        video_clip=self.tensor_video_to_pil_list(video_clip)
+        
+        # video_clip=self.tensor_video_to_pil_list(video_clip)
         # Initialize Random Variables
-        oh = video_clip[0].height  
-        ow = video_clip[0].width
+        oh = video_clip.size(2) 
+        ow = video_clip.size(3)
         
         # random crop
         video_clip, dx, dy, sx, sy = self.random_crop(video_clip, ow, oh)
 
         # resize
-        video_clip = [img.resize([self.img_size, self.img_size]) for img in video_clip]
+        video_clip = self.resize_fn(video_clip)
 
+        
         # random flip
         flip = random.randint(0, 1)
         if flip:
-            video_clip = [img.transpose(Image.FLIP_LEFT_RIGHT) for img in video_clip]
+            
+            video_clip=self.horizontal_flip(video_clip)
 
         # distort
         video_clip = self.random_distort_image(video_clip)
@@ -159,51 +132,37 @@ class Augmentation(object):
             target = np.array([])
             
         # to tensor
-        video_clip = self.to_tensor(video_clip)
+        video_clip = self.normalisation(video_clip)
         target = torch.as_tensor(target).float()
 
         return video_clip, target 
-
-
-# Transform for Testing
+    
+    
 class BaseTransform(object):
     def __init__(self, img_size=224, pixel_mean=[0., 0., 0.], pixel_std=[1., 1., 1.]):
         self.img_size = img_size
         self.pixel_mean = pixel_mean
         self.pixel_std = pixel_std
-
-    def to_tensor(self, video_clip):
-        return [F.normalize(F.to_tensor(image), self.pixel_mean, self.pixel_std) for image in video_clip]
-
-    @staticmethod
-    def tensor_video_to_pil_list(video_tensor):
-        # Créer une liste pour stocker les cadres PIL
-        pil_frames = []
-
-        # Inverser les dimensions du tenseur vidéo si nécessaire
-        video_tensor = video_tensor.permute(1, 0, 2, 3)
-
-        # Itérer sur la dimension temporelle du tensor de vidéo
-        for frame_tensor in video_tensor:
-            # Convertir le tensor de cadre en objet PIL Image
-            
-            pil_frame = to_pil_image(255-frame_tensor)
-            
-            # Convertir l'image en mode RGB
-            pil_frame = pil_frame.convert('RGB')
-            
-            # Ajouter le cadre PIL à la liste
-            pil_frames.append(pil_frame)
-
-        return pil_frames
+        
+    def normalisation(self, video_tensor):
+        normalized_clip = [F.normalize(video_tensor[i], self.pixel_mean, self.pixel_std) for i in range(video_tensor.size(0))]
+        normalized_clip=torch.stack(normalized_clip, dim=0)
+        return normalized_clip
+    
+    def resize_fn(self, video_tensor):
+        nouvelle_taille = (self.img_size, self.img_size)
+        resize = TF.Resize(nouvelle_taille)
+        resize_video = [resize(video_tensor[i]) for i in range(video_tensor.size(0))]
+        resize_video = torch.stack(resize_video, dim=0)
+        return resize_video
     
     def __call__(self, video_clip, target=None, normalize=True):
-        video_clip=self.tensor_video_to_pil_list(video_clip)
-        oh = video_clip[0].height
-        ow = video_clip[0].width
+        
+        oh = video_clip.size(2) 
+        ow = video_clip.size(3)
 
         # resize
-        video_clip = [img.resize([self.img_size, self.img_size]) for img in video_clip]
+        video_clip = self.resize_fn(video_clip)
 
         # normalize target
         if target is not None:
@@ -215,8 +174,7 @@ class BaseTransform(object):
             target = np.array([])
 
         # to tensor
-        video_clip = self.to_tensor(video_clip)
+        video_clip = self.normalisation(video_clip)
         target = torch.as_tensor(target).float()
 
         return video_clip, target 
-
