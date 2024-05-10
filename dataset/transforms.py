@@ -5,6 +5,9 @@ import torchvision.transforms.functional as F
 from PIL import Image
 from torchvision.transforms.functional import to_pil_image
 
+
+from pytorchvideo.transforms.transforms import UniformTemporalSubsample
+
 # Augmentation for Training
 class Augmentation(object):
     def __init__(self, img_size=224, pixel_mean=[0., 0., 0.], pixel_std=[1., 1., 1.], jitter=0.2, hue=0.1, saturation=1.5, exposure=1.5):
@@ -149,7 +152,8 @@ class Augmentation(object):
         # to tensor
         video_clip = self.to_tensor(video_clip)
         target = torch.as_tensor(target).float()
-
+        uniform_temporal_subsample = UniformTemporalSubsample(num_samples=30)
+        video_clip = uniform_temporal_subsample(video_clip)
         return video_clip, target 
 
 
