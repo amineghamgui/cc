@@ -56,10 +56,17 @@ class Augmentation(object):
         swidth = width - pleft - pright
         sheight = height - ptop - pbot
 
+        sx = float(swidth)  / width
+        sy = float(sheight) / height
+        
+        dx = (float(pleft) / width)/sx
+        dy = (float(ptop) / height)/sy
+
         # Random crop
         cropped_clip = F.crop(video_tensor, ptop, pleft, sheight, swidth)
 
-        return cropped_clip, ptop, pleft, sheight, swidth
+        return cropped_clip, dx, dy, sx, sy
+
 
     def apply_bbox(self, target, ow, oh, dx, dy, sx, sy):
         sx, sy = 1./sx, 1./sy
