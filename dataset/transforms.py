@@ -159,12 +159,24 @@ class BaseTransform(object):
         self.img_size = img_size
         self.pixel_mean = pixel_mean
         self.pixel_std = pixel_std
-
+    
     def to_tensor(self, video_clip):
         return [F.normalize(F.to_tensor(image), self.pixel_mean, self.pixel_std) for image in video_clip]
 
 
     def __call__(self, video_clip, target=None, normalize=True):
+
+        pil_frames = []
+       
+        for frame_tensor in video_clip:
+            pil_frame = to_pil_image(frame_tensor)
+            pil_frame = pil_frame.convert('RGB')
+            pil_frames.append(pil_frame)
+
+        video_clip=pil_frames
+        pil_frames=None
+
+        
         oh = video_clip[0].height
         ow = video_clip[0].width
 
