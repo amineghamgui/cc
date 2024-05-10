@@ -6,8 +6,8 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
-from .pytorchvideo.transforms.transforms import UniformTemporalSubsample
-from .pytorchvideo.data.encoded_video import EncodedVideo
+from dataset.pytorchvideo.transforms.transforms import UniformTemporalSubsample
+from dataset.pytorchvideo.data.encoded_video import EncodedVideo
 
 
 
