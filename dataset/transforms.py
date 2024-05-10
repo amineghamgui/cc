@@ -69,6 +69,8 @@ class Augmentation(object):
         target[..., 2] = np.minimum(0.999, np.maximum(0, target[..., 2] / ow * sx - dx)) 
         target[..., 3] = np.minimum(0.999, np.maximum(0, target[..., 3] / oh * sy - dy)) 
 
+
+        print("target apres apply deltas on bbox",target)
         # refine target
         refine_target = []
         for i in range(target.shape[0]):
@@ -80,7 +82,7 @@ class Augmentation(object):
                 continue
             
             refine_target.append(tgt)
-
+        print( "target apres refine_target",refine_target)
         refine_target = np.array(refine_target).reshape(-1, target.shape[-1])
 
         return refine_target
