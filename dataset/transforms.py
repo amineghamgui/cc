@@ -155,7 +155,6 @@ class Augmentation(object):
         video_clip_to_tensor=torch.stack(video_clip_to_tensor, dim=1)
         target = torch.as_tensor(target).float()
         uniform_temporal_subsample = UniformTemporalSubsample(num_samples=30)
-        print("****************type***********",type(video_clip_to_tensor))
         video_clip = uniform_temporal_subsample(video_clip_to_tensor)
         
         return video_clip, target 
