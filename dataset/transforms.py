@@ -110,6 +110,15 @@ class Augmentation(object):
 
 
     def __call__(self, video_clip, target):
+
+        pil_frames = []
+        for frame_tensor in video_clip:
+            pil_frame = to_pil_image(frame_tensor)
+            pil_frame = pil_frame.convert('RGB')
+            pil_frames.append(pil_frame)
+
+        video_clip=pil_frames
+        pil_frames=None
         # Initialize Random Variables
         oh = video_clip[0].height  
         ow = video_clip[0].width
