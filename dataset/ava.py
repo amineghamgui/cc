@@ -122,9 +122,7 @@ class AVA_Dataset(Dataset):
         self.l_boxes=[]
         for keys in annotation_factory:
             for keys1 in annotation_factory[keys]:
-                print(keys)
                 self.l_clip.append(video_factory[keys][keys1])
-                print(keys1)
                 self.l_boxes.append(annotation_factory[keys][keys1])
         video_factory = None
         annotation_factory=None
@@ -149,7 +147,6 @@ class AVA_Dataset(Dataset):
     def pull_item(self, idx):
 
             video_clip = self.l_clip[idx].get_clip(start_sec=0.0, end_sec=1.0)["video"].permute(1,0,2,3)
-            print("video_clip dans pull_item shape is " ,video_clip.shape )
             video_clip=255-video_clip
             keyframe_info="self.l_clip[idx][-1]"
 
@@ -181,9 +178,7 @@ class AVA_Dataset(Dataset):
 
             # target: [N, 4 + C]
             target8 = np.concatenate([boxes, labels], axis=-1)
-            print( 'type taarget',type(target8))
-            
-            print("********************************target************************\n",target8)
+
             # transform
             
             l_clip, target = self.transform(video_clip, target8)
