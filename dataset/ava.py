@@ -64,42 +64,20 @@ class AVA_Dataset(Dataset):
     #     return list_frames
 
 
-    # @staticmethod
-    # def extract_frames(video_path):
-    #     video = EncodedVideo.from_path(video_path,)
-    #     # Load the desired clip
-    #     video_data = video.get_clip(start_sec=0, end_sec=1.0)
-    #     uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
-    #     # Créer un tenseur vidéo simulé avec les dimensions (C, T, H, W)
-    #     video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
-    #     # Appliquer la transformation
-    #     subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
-    #     subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
-    #     return subsampled_video_tensor
-
     @staticmethod
     def extract_frames(video_path):
-        # Charger la vidéo
         video = EncodedVideo.from_path(video_path)
-        # Charger le clip désiré
-        video_data = video.get_clip(start_sec=0, end_sec=1.0)
-        uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
+        # Load the desired clip
+#         video_data = video.get_clip(start_sec=0, end_sec=1.0)
+        #uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
         # Créer un tenseur vidéo simulé avec les dimensions (C, T, H, W)
-        video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
-        
-        # Transférer le tenseur vidéo sur le GPU si disponible
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        video_tensor = video_tensor.to(device)
-        
+#         video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
         # Appliquer la transformation
-        subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
-        subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
-        
-        # Transférer le tenseur résultant sur le CPU si nécessaire
-        subsampled_video_tensor = subsampled_video_tensor.cpu() if device == torch.device("cuda") else subsampled_video_tensor
-        
-        return subsampled_video_tensor
-    
+#         subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
+#         subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
+#         subsampled_video_tensor=video_tensor.permute(1, 0, 2, 3)
+        return video
+
 
     def parse_csv_to_dict(self):
         result_dict = {}
@@ -194,15 +172,21 @@ class AVA_Dataset(Dataset):
 
     def pull_item(self, idx):
 
-
-            seq=self.l_clip[idx]
+            
+#             seq=self.l_clip[idx]
+            video_clip = self.l_clip[idx].get_clip(start_sec=0.0, end_sec=1.0)["video"].permute(1,0,2,3)
+            print("video_clip dans pull_item shape is " ,video_clip.shape )
+            video_clip=255-video_clip
             keyframe_info="self.l_clip[idx][-1]"
 
             # load a video clip
-            
-            frame =self.l_clip[idx][0]
-            ow, oh = frame.width, frame.height
+             
+                
+            oh = video_clip.size(2) 
+            ow = video_clip.size(3)
 
+            
+            
             # Get boxes and labels for current clip.
             boxes = []
             labels = []
@@ -222,13 +206,18 @@ class AVA_Dataset(Dataset):
             labels = np.array(labels).reshape(-1,  self.num_classes)
 
             # target: [N, 4 + C]
-            target = np.concatenate([boxes, labels], axis=-1)
-
+            target8 = np.concatenate([boxes, labels], axis=-1)
+            print( 'type taarget',type(target8))
+            
+            print("********************************target************************\n",target8)
             # transform
-            l_clip, target = self.transform(self.l_clip[idx], target)
-            # List [T, 3, H, W] -> [3, T, H, W]
+            
+            l_clip, target = self.transform(video_clip, target8)
             l_clip = torch.stack(l_clip, dim=1)
-
+            # List [T, 3, H, W] -> [3, T, H, W]
+#             l_clip = torch.stack(l_clip, dim=1)
+            print(type(target), ' type target right after transform')
+            print(target, ' type target right after transform')
             # reformat target
             target = {
                 'boxes': target[:, :4].float(),  # [N, 4]
@@ -262,19 +251,19 @@ if __name__ == '__main__':
         'saturation': 1.5,
         'exposure': 1.5
     }
-    transform = Augmentation(
+#     transform = Augmentation(
+#         img_size=img_size,
+#         pixel_mean=trans_config['pixel_mean'],
+#         pixel_std=trans_config['pixel_std'],
+#         jitter=trans_config['jitter'],
+#         saturation=trans_config['saturation'],
+#         exposure=trans_config['exposure']
+#         )
+    transform = BaseTransform(
         img_size=img_size,
         pixel_mean=trans_config['pixel_mean'],
-        pixel_std=trans_config['pixel_std'],
-        jitter=trans_config['jitter'],
-        saturation=trans_config['saturation'],
-        exposure=trans_config['exposure']
+        pixel_std=trans_config['pixel_std']
         )
-    # transform = BaseTransform(
-    #     img_size=img_size,
-    #     pixel_mean=trans_config['pixel_mean'],
-    #     pixel_std=trans_config['pixel_std']
-    #     )
 
     train_dataset = AVA_Dataset(
         cfg=dataset_config,
