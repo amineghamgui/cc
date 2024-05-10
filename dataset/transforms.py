@@ -203,4 +203,8 @@ class BaseTransform(object):
         video_clip = self.to_tensor(video_clip)
         target = torch.as_tensor(target).float()
 
+        
+        
+        video_clip=torch.stack(video_clip, dim=1)
+        
         return video_clip, target 
