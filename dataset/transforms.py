@@ -150,10 +150,12 @@ class Augmentation(object):
             target = np.array([])
             
         # to tensor
-        video_clip = self.to_tensor(video_clip)
+        video_clip_to_tensor = self.to_tensor(video_clip)
+        video_clip=None 
         target = torch.as_tensor(target).float()
         uniform_temporal_subsample = UniformTemporalSubsample(num_samples=30)
-        video_clip = uniform_temporal_subsample(video_clip)
+        print("****************type***********",type(video_clip_to_tensor))
+        video_clip = uniform_temporal_subsample(video_clip_to_tensor)
         return video_clip, target 
 
 
