@@ -113,7 +113,7 @@ class Augmentation(object):
 
         pil_frames = []
         for frame_tensor in video_clip:
-            pil_frame = to_pil_image(frame_tensor)
+            pil_frame = to_pil_image(255-frame_tensor.permute(1,0,2,3))
             pil_frame = pil_frame.convert('RGB')
             pil_frames.append(pil_frame)
 
