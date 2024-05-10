@@ -112,6 +112,7 @@ class Augmentation(object):
         # distort
         video_clip = self.random_distort_image(video_clip)
         print("target in transform",target)
+        print("target is none or not ", target is not None)
         # process target
         if target is not None:
             print('target not none da5let')
