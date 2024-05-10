@@ -44,6 +44,7 @@ class AVA_Dataset(Dataset):
 
     import cv2
 
+
     @staticmethod
     def extract_frames(video_path):
         video = EncodedVideo.from_path(video_path)
@@ -143,8 +144,6 @@ class AVA_Dataset(Dataset):
 
     def pull_item(self, idx):
 
-            
-#             seq=self.l_clip[idx]
             video_clip = self.l_clip[idx].get_clip(start_sec=0.0, end_sec=1.0)["video"].permute(1,0,2,3)
             print("video_clip dans pull_item shape is " ,video_clip.shape )
             video_clip=255-video_clip
@@ -184,11 +183,6 @@ class AVA_Dataset(Dataset):
             # transform
             
             l_clip, target = self.transform(video_clip, target8)
-            l_clip = torch.stack(l_clip, dim=1)
-            # List [T, 3, H, W] -> [3, T, H, W]
-#             l_clip = torch.stack(l_clip, dim=1)
-            print(type(target), ' type target right after transform')
-            print(target, ' type target right after transform')
             # reformat target
             target = {
                 'boxes': target[:, :4].float(),  # [N, 4]
@@ -222,19 +216,19 @@ if __name__ == '__main__':
         'saturation': 1.5,
         'exposure': 1.5
     }
-#     transform = Augmentation(
-#         img_size=img_size,
-#         pixel_mean=trans_config['pixel_mean'],
-#         pixel_std=trans_config['pixel_std'],
-#         jitter=trans_config['jitter'],
-#         saturation=trans_config['saturation'],
-#         exposure=trans_config['exposure']
-#         )
-    transform = BaseTransform(
+    transform = Augmentation(
         img_size=img_size,
         pixel_mean=trans_config['pixel_mean'],
-        pixel_std=trans_config['pixel_std']
+        pixel_std=trans_config['pixel_std'],
+        jitter=trans_config['jitter'],
+        saturation=trans_config['saturation'],
+        exposure=trans_config['exposure']
         )
+#     transform = BaseTransform(
+#         img_size=img_size,
+#         pixel_mean=trans_config['pixel_mean'],
+#         pixel_std=trans_config['pixel_std']
+#         )
 
     train_dataset = AVA_Dataset(
         cfg=dataset_config,
