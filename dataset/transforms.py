@@ -6,7 +6,7 @@ from PIL import Image
 from torchvision.transforms.functional import to_pil_image
 
 
-from .pytorchvideo.transforms.transforms import UniformTemporalSubsample
+from .dataset.pytorchvideo.transforms.transforms import UniformTemporalSubsample
 
 # Augmentation for Training
 class Augmentation(object):
