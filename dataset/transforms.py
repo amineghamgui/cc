@@ -114,9 +114,13 @@ class Augmentation(object):
         print("target in transform",target)
         # process target
         if target is not None:
+            print('target not none da5let')
+            print("type of target ",type(target),"   ",target)
             target = self.apply_bbox(target, ow, oh, dx, dy, sx, sy)
+            print( "target apres apply_bbox type",type( target) , '   ' ,target)
             if flip:
                 target[..., [0, 2]] = 1.0 - target[..., [2, 0]]
+                print( "target apres flip type",type( target) , '   ' ,target)
         else:
             target = np.array([])
             
@@ -153,6 +157,7 @@ class BaseTransform(object):
 
         # normalize target
         if target is not None:
+            
             if normalize:
                 target[..., [0, 2]] /= ow
                 target[..., [1, 3]] /= oh
