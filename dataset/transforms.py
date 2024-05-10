@@ -112,7 +112,7 @@ class Augmentation(object):
     def __call__(self, video_clip, target):
 
         pil_frames = []
-        video_clip=255-video_clip.permute(1,0,2,3)
+       
         for frame_tensor in video_clip:
             pil_frame = to_pil_image(frame_tensor)
             pil_frame = pil_frame.convert('RGB')
