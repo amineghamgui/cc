@@ -6,8 +6,15 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
-from .pytorchvideo.transforms.transforms import UniformTemporalSubsample
-from .pytorchvideo.data.encoded_video import EncodedVideo
+# from .pytorchvideo.transforms.transforms import UniformTemporalSubsample
+# from .pytorchvideo.data.encoded_video import EncodedVideo
+
+from .pytorchvideo.transforms import (
+    transforms
+)
+
+
+
 
 # Dataset for AVA
 class AVA_Dataset(Dataset):
@@ -47,7 +54,7 @@ class AVA_Dataset(Dataset):
 
     @staticmethod
     def extract_frames(video_path):
-        video = EncodedVideo.from_path(video_path)
+        video = transforms.EncodedVideo.from_path(video_path)
         return video
 
 
