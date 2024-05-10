@@ -43,39 +43,10 @@ class AVA_Dataset(Dataset):
   
 
     import cv2
-    # @staticmethod
-    # def extract_frames(video_path):
-    #     list_frames = []
-    #     video_capture = cv2.VideoCapture(video_path)
-    #     while True:
-    #         success, frame = video_capture.read()
-    #         if not success:
-    #             break
-    #         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    #         list_frames.append(Image.fromarray(frame_rgb))
-    #     if (len(list_frames)%2==0):
-    #         last_frame=len(list_frames)//2
-    #         list_frames=list_frames[:last_frame]
-    #     elif(len(list_frames)%2!=0):
-    #         last_frame=len(list_frames)//2
-    #         list_frames=list_frames[:last_frame+1]
-            
-    #     video_capture.release()
-    #     return list_frames
-
 
     @staticmethod
     def extract_frames(video_path):
         video = EncodedVideo.from_path(video_path)
-        # Load the desired clip
-#         video_data = video.get_clip(start_sec=0, end_sec=1.0)
-        #uniform_temporal_subsample = UniformTemporalSubsample(num_samples=25)
-        # Créer un tenseur vidéo simulé avec les dimensions (C, T, H, W)
-#         video_tensor = video_data['video']  # 3 canaux, 32 images, 256x256 résolution
-        # Appliquer la transformation
-#         subsampled_video_tensor = uniform_temporal_subsample(video_tensor)
-#         subsampled_video_tensor = subsampled_video_tensor.permute(1, 0, 2, 3)
-#         subsampled_video_tensor=video_tensor.permute(1, 0, 2, 3)
         return video
 
 
