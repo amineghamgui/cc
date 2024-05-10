@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torchvision.transforms.functional as F
 from PIL import Image
-
+from torchvision.transforms.functional import to_pil_image
 
 # Augmentation for Training
 class Augmentation(object):
